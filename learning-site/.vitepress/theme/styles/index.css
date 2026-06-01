@@ -1,0 +1,37 @@
+/* Custom styles for Claude Code learning site */
+:root {
+  --cc-accent: #e8833a;
+  --cc-bg: #1a1a2e;
+}
+
+/* Mermaid diagram theming */
+.mermaid {
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+/* Code annotation styling */
+.code-annotation {
+  color: var(--vp-c-brand-1);
+  font-size: 0.85em;
+}
+
+/* Prerequisite badge */
+.prereq-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8em;
+  background: var(--vp-c-brand-soft);
+  color: var(--vp-c-brand-1);
+  margin-right: 4px;
+}
+
+/* Chapter navigation hint */
+.chapter-nav-hint {
+  border-top: 1px solid var(--vp-c-divider);
+  padding-top: 1rem;
+  margin-top: 2rem;
+  font-size: 0.9em;
+  color: var(--vp-c-text-2);
+}

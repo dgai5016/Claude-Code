@@ -1,0 +1,17 @@
+{
+  "name": "claude-code-learning-site",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "从零开始，层层递进地理解 Claude Code 源码的设计原理与代码实现",
+  "scripts": {
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "mermaid": "^11.15.0",
+    "vitepress": "^1.6.4",
+    "vitepress-plugin-mermaid": "^2.0.17"
+  }
+}
