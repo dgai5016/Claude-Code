@@ -441,12 +441,51 @@ function getSimpleToneAndStyleSection(): string {
   return [`# Tone and style`, ...prependBullets(items)].join(`\n`)
 }
 
+/**
+ * 构建完整的系统提示词（System Prompt）。
+ *
+ * 这是 Claude Code 的"大脑指令集"——将角色定义、行为规范、工具使用指南、
+ * 环境信息、MCP 指令、语言偏好、记忆等组装成一个字符串数组，最终作为
+ * API 请求的 system 字段发送给模型。
+ *
+ * ## 三条执行路径
+ *
+ * 1. **精简模式**（`CLAUDE_CODE_SIMPLE=1`）：只返回一句话 + CWD + 日期，
+ *    用于调试或最小化启动。
+ *
+ * 2. **主动/自治模式**（`PROACTIVE` / `KAIROS` 特性开关激活）：
+ *    返回自治代理的精简提示词，包含自主工作指引（getProactiveSection）。
+ *
+ * 3. **标准模式**（默认路径）：组装完整的分层系统提示词。
+ *
+ * ## 静态/动态分区架构
+ *
+ * 标准模式下，系统提示词分为两段：
+ * - **静态段**（Static）：intro、system、doing-tasks、actions、tools、tone、
+ *   output-efficiency 等不随会话变化的固定指令。这些内容可以被 Anthropic
+ *   API 的 prompt cache 以 `scope: 'global'` 级别缓存，跨组织/跨会话复用，
+ *   显著降低首 token 延迟和成本。
+ * - **动态段**（Dynamic）：语言偏好、MCP 指令、记忆、环境信息、scratchpad
+ *   等随用户/会话变化的内容。通过 `systemPromptSection()` 注册，由
+ *   `resolveSystemPromptSections()` 统一解析。MCP 指令因服务端随时连接/
+ *   断开而使用 `DANGEROUS_uncachedSystemPromptSection` 避免缓存污染。
+ *
+ * 两段之间插入 `SYSTEM_PROMPT_DYNAMIC_BOUNDARY` 标记，`splitSysPromptPrefix()`
+ * 据此切分，分别设置不同的缓存作用域。移动或删除该标记会破坏缓存逻辑。
+ *
+ * @param tools - 当前会话启用的工具集合，用于生成工具使用指引和会话特定指引
+ * @param model - 当前使用的模型 ID，用于环境信息和知识截止日期
+ * @param additionalWorkingDirectories - 额外的工作目录列表
+ * @param mcpClients - 已连接的 MCP 服务端列表，用于注入 MCP 指令
+ * @returns 系统提示词字符串数组，每个元素是一个独立的 prompt section
+ */
 export async function getSystemPrompt(
   tools: Tools,
   model: string,
   additionalWorkingDirectories?: string[],
   mcpClients?: MCPServerConnection[],
 ): Promise<string[]> {
+  // 路径 1：精简模式——仅返回最基本的身份声明
   if (isEnvTruthy(process.env.CLAUDE_CODE_SIMPLE)) {
     return [
       `You are Claude Code, Anthropic's official CLI for Claude.\n\nCWD: ${getCwd()}\nDate: ${getSessionStartDate()}`,
@@ -454,6 +493,7 @@ export async function getSystemPrompt(
   }
 
   const cwd = getCwd()
+  // 并行获取三项初始化数据，减少启动延迟
   const [skillToolCommands, outputStyleConfig, envInfo] = await Promise.all([
     getSkillToolCommands(cwd),
     getOutputStyleConfig(),
@@ -463,6 +503,7 @@ export async function getSystemPrompt(
   const settings = getInitialSettings()
   const enabledTools = new Set(tools.map(_ => _.name))
 
+  // 路径 2：主动/自治模式——返回精简的自治代理提示词
   if (
     (feature('PROACTIVE') || feature('KAIROS')) &&
     proactiveModule?.isProactiveActive()
@@ -488,6 +529,9 @@ ${CYBER_RISK_INSTRUCTION}`,
     ].filter(s => s !== null)
   }
 
+  // 路径 3：标准模式——构建完整的分层系统提示词
+
+  // 动态段：通过 systemPromptSection 注册，支持缓存键追踪和统一解析
   const dynamicSections = [
     systemPromptSection('session_guidance', () =>
       getSessionSpecificGuidanceSection(enabledTools, skillToolCommands),
@@ -554,24 +598,26 @@ ${CYBER_RISK_INSTRUCTION}`,
       : []),
   ]
 
+  // 统一解析所有动态段（执行各 section 工厂函数，过滤 null）
   const resolvedDynamicSections =
     await resolveSystemPromptSections(dynamicSections)
 
+  // 组装最终提示词：静态段 → 边界标记 → 动态段
   return [
-    // --- Static content (cacheable) ---
-    getSimpleIntroSection(outputStyleConfig),
-    getSimpleSystemSection(),
+    // --- 静态段（可跨会话缓存，scope: 'global'）---
+    getSimpleIntroSection(outputStyleConfig),       // 角色定义 + 安全约束
+    getSimpleSystemSection(),                       // 系统级行为规范
     outputStyleConfig === null ||
     outputStyleConfig.keepCodingInstructions === true
-      ? getSimpleDoingTasksSection()
+      ? getSimpleDoingTasksSection()                // 任务执行行为准则
       : null,
-    getActionsSection(),
-    getUsingYourToolsSection(enabledTools),
-    getSimpleToneAndStyleSection(),
-    getOutputEfficiencySection(),
-    // === BOUNDARY MARKER - DO NOT MOVE OR REMOVE ===
+    getActionsSection(),                            // 风险操作的谨慎原则
+    getUsingYourToolsSection(enabledTools),         // 工具使用指引
+    getSimpleToneAndStyleSection(),                 // 语气与风格规范
+    getOutputEfficiencySection(),                   // 输出效率指引
+    // === 缓存边界标记 - 切勿移动或删除 ===
     ...(shouldUseGlobalCacheScope() ? [SYSTEM_PROMPT_DYNAMIC_BOUNDARY] : []),
-    // --- Dynamic content (registry-managed) ---
+    // --- 动态段（随会话/用户变化，不可全局缓存）---
     ...resolvedDynamicSections,
   ].filter(s => s !== null)
 }

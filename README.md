@@ -294,6 +294,76 @@ vendor/                 # 原生绑定源码
 
 ---
 
+## 源码解析
+
+### `src/constants/prompts.ts` — 系统提示词工厂
+
+> 源码位置：`src/constants/prompts.ts` · 相关文件：`systemPromptSections.ts`、`outputStyles.ts`、`cyberRiskInstruction.ts`
+
+这个文件是 Claude Code 的"大脑指令集"入口，负责将角色定义、行为规范、工具使用指南、环境信息等组装成发送给模型的 System Prompt。
+
+#### `getSystemPrompt(tools, model, additionalWorkingDirectories?, mcpClients?)`
+
+构建完整的系统提示词，返回 `Promise<string[]>`——每个元素是一个独立的 prompt section，最终作为 API 请求的 `system` 字段发送。
+
+**三条执行路径：**
+
+| 路径 | 触发条件 | 说明 |
+|------|---------|------|
+| 精简模式 | `CLAUDE_CODE_SIMPLE=1` | 只返回身份声明 + CWD + 日期，用于调试 |
+| 主动/自治模式 | `feature('PROACTIVE')` 或 `feature('KAIROS')` 激活 | 自治代理的精简提示词，含自主工作指引 |
+| 标准模式 | 默认 | 完整的分层系统提示词 |
+
+**静态/动态分区架构（标准模式）：**
+
+系统提示词在标准模式下分为两段，核心目的是利用 Anthropic API 的 Prompt Cache 降低成本和延迟：
+
+```
+┌─────────────────────────────────────────┐
+│  静态段（scope: 'global'，可跨会话缓存） │
+│  ├─ Intro（角色定义 + 安全约束）          │
+│  ├─ System（系统级行为规范）              │
+│  ├─ Doing Tasks（任务执行行为准则）       │
+│  ├─ Actions（风险操作谨慎原则）           │
+│  ├─ Using Tools（工具使用指引）           │
+│  ├─ Tone & Style（语气与风格）           │
+│  └─ Output Efficiency（输出效率）        │
+├──────── SYSTEM_PROMPT_DYNAMIC_BOUNDARY ────┤
+│  动态段（随会话/用户变化，不可全局缓存）  │
+│  ├─ Session Guidance（会话特定指引）      │
+│  ├─ Memory（记忆提示词）                 │
+│  ├─ Ant Model Override（内部模型覆盖）    │
+│  ├─ Env Info（环境信息 + 模型 ID）       │
+│  ├─ Language（语言偏好）                 │
+│  ├─ Output Style（输出风格配置）          │
+│  ├─ MCP Instructions（MCP 服务端指令）    │
+│  ├─ Scratchpad（临时目录指引）           │
+│  ├─ FRC（函数结果清理）                  │
+│  ├─ Summarize Tool Results               │
+│  └─ ... (条件性 section)                 │
+└─────────────────────────────────────────┘
+```
+
+- **静态段**内容不随会话变化，可以被 prompt cache 以 `global` 作用域缓存，跨组织/跨会话复用
+- **动态段**通过 `systemPromptSection()` 注册（支持缓存键追踪），由 `resolveSystemPromptSections()` 统一解析
+- MCP 指令因服务端随时连接/断开，使用 `DANGEROUS_uncachedSystemPromptSection` 避免缓存污染
+- 边界标记 `SYSTEM_PROMPT_DYNAMIC_BOUNDARY` 被 `splitSysPromptPrefix()` 用于切分缓存作用域，**切勿移动或删除**
+
+**关键辅助函数：**
+
+| 函数 | 作用 |
+|------|------|
+| `getSimpleIntroSection()` | 角色定义与安全约束（含 `CYBER_RISK_INSTRUCTION`） |
+| `getSimpleSystemSection()` | 系统级行为规范（权限模式、system-reminder、hooks） |
+| `getSimpleDoingTasksSection()` | 任务执行行为准则（代码风格、安全、向后兼容） |
+| `getActionsSection()` | 风险操作的谨慎原则（不可逆操作需确认） |
+| `getUsingYourToolsSection()` | 工具使用指引（优先专用工具、并行调用） |
+| `getOutputEfficiencySection()` | 输出效率指引（内部版 vs 外部版有差异） |
+| `getSessionSpecificGuidanceSection()` | 会话特定指引（Agent/Fork/Skills/验证代理） |
+| `computeSimpleEnvInfo()` | 环境信息（平台、Shell、模型 ID、知识截止日期） |
+
+---
+
 ## 数据来源
 
 - npm 包：[@anthropic-ai/claude-code](https://www.npmjs.com/package/@anthropic-ai/claude-code)
