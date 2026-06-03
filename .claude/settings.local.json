@@ -4,7 +4,8 @@
       "Bash(bun --version)",
       "Bash(curl -fsSL https://bun.sh/install)",
       "Bash(bash)",
-      "Bash(bun install *)"
+      "Bash(bun install *)",
+      "Bash(grep -v '^\\\\-\\\\s*$')"
     ]
   }
 }
