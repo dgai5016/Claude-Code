@@ -89,7 +89,7 @@
 // 上面这些注释解释了为什么有些副作用必须在所有 import 之前执行：
 // 性能打点、MDM（移动设备管理）读取、钥匙串预取都需要尽早启动以并行执行
 
-// 导入性能打点工具，用于测量启动各阶段耗时
+// 导入性能打点工具，用于测量启动各阶段耗时（这是启动优化的关键诊断工具）
 import { profileCheckpoint, profileReport } from './utils/startupProfiler.js';
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
@@ -119,139 +119,139 @@ startKeychainPrefetch();
 // 导入 bun 的 bundle 特性标志功能，用于条件编译和死代码消除
 import { feature } from 'bun:bundle';
 
-// 导入 Commander.js 命令行框架的类和工具
+// 导入 Commander.js 命令行框架，用于定义和解析 claude 命令行的所有参数和子命令
 import { Command as CommanderCommand, InvalidArgumentError, Option } from '@commander-js/extra-typings';
 
-// 导入 chalk 库，用于终端彩色输出
+// 导入 chalk 库，用于在终端输出彩色的错误/警告信息（如红色报错）
 import chalk from 'chalk';
 
-// 导入 Node.js 文件系统同步读取函数
+// 导入文件系统同步读取函数，用于读取 --settings 指定的设置文件内容
 import { readFileSync } from 'fs';
 
-// 导入 lodash 工具函数：mapValues 用于映射对象的值
+// 导入 mapValues，用于将 MCP 配置对象的每个值进行转换处理
 import mapValues from 'lodash-es/mapValues.js';
 
-// 导入 lodash 工具函数：pickBy 用于按条件筛选对象属性
+// 导入 pickBy，用于从 MCP 配置中筛选出有效的服务器条目
 import pickBy from 'lodash-es/pickBy.js';
 
-// 导入 lodash 工具函数：uniqBy 用于按属性去重数组
+// 导入 uniqBy，用于对 MCP 服务器列表按名称去重（避免重复连接）
 import uniqBy from 'lodash-es/uniqBy.js';
 
-// 导入 React 库（虽然这个文件主要不是 UI，但部分交互功能依赖 React）
+// 导入 React，因为 Ink（终端 UI 框架）基于 React，交互式 REPL 的界面渲染依赖它
 import React from 'react';
 
-// 导入 OAuth 配置获取函数
+// 导入 OAuth 配置，用于获取 OAuth 认证所需的客户端 ID 和回调地址等信息
 import { getOauthConfig } from './constants/oauth.js';
 
-// 导入远程会话 URL 获取函数
+// 导入远程会话 URL，用于构建 CCR（Claude Code Remote）远程会话的连接地址
 import { getRemoteSessionUrl } from './constants/product.js';
 
-// 导入系统上下文和用户上下文获取函数
+// 导入上下文获取函数：系统上下文包含 git 状态等环境信息，用户上下文包含账号信息
 import { getSystemContext, getUserContext } from './context.js';
 
-// 导入初始化函数和遥测初始化函数
+// 导入 init（执行所有启动初始化步骤）和 initializeTelemetryAfterTrust（用户信任后启动遥测）
 import { init, initializeTelemetryAfterTrust } from './entrypoints/init.js';
 
-// 导入历史记录添加函数
+// 导入历史记录添加函数，用于将用户的提示词保存到对话历史中
 import { addToHistory } from './history.js';
 
-// 导入 Ink 渲染器的 Root 类型（Ink 是 React 的终端 UI 框架）
+// 导入 Ink 渲染器 Root 类型，Ink 是 React 的终端 UI 框架，用于渲染交互式界面
 import type { Root } from './ink.js';
 
-// 导入 REPL（交互式命令行）启动函数
+// 导入 REPL 启动函数，REPL 是用户与 Claude 交互的核心循环（读取输入→处理→输出）
 import { launchRepl } from './replLauncher.js';
 
-// 导入 GrowthBook 功能标志相关函数（A/B 测试和特性开关）
+// 导入 GrowthBook 功能标志系统，用于控制哪些实验性功能对用户可见（A/B 测试和灰度发布）
 import { hasGrowthBookEnvOverride, initializeGrowthBook, refreshGrowthBookAfterAuthChange } from './services/analytics/growthbook.js';
 
-// 导入引导数据获取函数
+// 导入引导数据获取函数，用于从服务端获取用户账号状态、订阅信息等初始化数据
 import { fetchBootstrapData } from './services/api/bootstrap.js';
 
-// 导入文件 API 相关的类型和函数
+// 导入文件 API，用于处理 --file 参数指定的远程文件下载（如从 Claude.ai 下载文件）
 import { type DownloadResult, downloadSessionFiles, type FilesApiConfig, parseFileSpecs } from './services/api/filesApi.js';
 
-// 导入推荐资格预取函数
+// 导入推荐资格预取，用于提前判断用户是否有资格使用推荐功能
 import { prefetchPassesEligibility } from './services/api/referral.js';
 
-// 导入官方 MCP 服务器 URL 预取函数
+// 导入官方 MCP 服务器 URL 预取，用于提前获取 Anthropic 官方提供的 MCP 服务器列表
 import { prefetchOfficialMcpUrls } from './services/mcp/officialRegistry.js';
 
-// 导入 MCP 服务器配置相关类型
+// 导入 MCP 服务器配置类型，MCP 是 Model Context Protocol，让 Claude 能使用外部工具
 import type { McpSdkServerConfig, McpServerConfig, ScopedMcpServerConfig } from './services/mcp/types.js';
 
-// 导入策略限制相关函数
+// 导入策略限制函数，用于检查和加载企业管理员设定的使用限制（如 API 调用次数上限）
 import { isPolicyAllowed, loadPolicyLimits, refreshPolicyLimits, waitForPolicyLimitsToLoad } from './services/policyLimits/index.js';
 
-// 导入远程托管设置的加载和刷新函数
+// 导入远程托管设置，企业版 Claude Code 可以从服务端下发配置，这些函数负责加载和刷新
 import { loadRemoteManagedSettings, refreshRemoteManagedSettings } from './services/remoteManagedSettings/index.js';
 
-// 导入工具输入 JSON Schema 类型
+// 导入工具输入 JSON Schema 类型，用于定义 --json-schema 参数的结构化输出验证规则
 import type { ToolInputJSONSchema } from './Tool.js';
 
-// 导入合成输出工具相关函数
+// 导入合成输出工具，当使用 --json-schema 时，该工具确保 AI 的输出符合指定的 JSON 结构
 import { createSyntheticOutputTool, isSyntheticOutputToolEnabled } from './tools/SyntheticOutputTool/SyntheticOutputTool.js';
 
-// 导入工具获取函数
+// 导入工具获取函数，用于收集当前会话可用的所有工具列表（Bash、Edit、Read 等）
 import { getTools } from './tools.js';
 
-// 导入 Advisor（顾问模式）相关工具函数
+// 导入 Advisor 顾问模式函数，顾问模式会在回答后附加一个额外的审查步骤以提高质量
 import { canUserConfigureAdvisor, getInitialAdvisorSetting, isAdvisorEnabled, isValidAdvisorModel, modelSupportsAdvisor } from './utils/advisor.js';
 
-// 导入 Agent 群集模式启用判断函数
+// 导入 Agent 群集启用判断，群集模式允许一个 Agent 启动多个子 Agent 并行工作
 import { isAgentSwarmsEnabled } from './utils/agentSwarmsEnabled.js';
 
-// 导入数组工具函数：count 计数和 uniq 去重
+// 导入 count（计数）和 uniq（去重），用于统计工具数量和去重代理列表
 import { count, uniq } from './utils/array.js';
 
-// 导入终端录制器安装函数（用于录制终端会话）
+// 导入终端录制器，用于将 Claude Code 的终端会话录制成 asciicast 格式以便回放
 import { installAsciicastRecorder } from './utils/asciicast.js';
 
-// 导入认证相关工具函数
+// 导入认证相关函数：获取订阅类型、预取 AWS/GCP 凭证、验证强制登录的组织
 import { getSubscriptionType, isClaudeAISubscriber, prefetchAwsCredentialsAndBedRockInfoIfSafe, prefetchGcpCredentialsIfSafe, validateForceLoginOrg } from './utils/auth.js';
 
-// 导入全局配置相关函数
+// 导入全局配置函数：读取/保存配置、检查用户是否已接受信任对话框、获取远程控制设置
 import { checkHasTrustDialogAccepted, getGlobalConfig, getRemoteControlAtStartup, isAutoUpdaterDisabled, saveGlobalConfig } from './utils/config.js';
 
-// 导入早期输入捕获相关函数（用于在启动过程中提前捕获用户输入）
+// 导入早期输入捕获，在启动过程中就开始监听键盘输入，减少用户等待感
 import { seedEarlyInput, stopCapturingEarlyInput } from './utils/earlyInput.js';
 
-// 导入"努力程度"设置相关函数（控制 AI 回答的详细程度）
+// 导入努力程度设置，控制 AI 花多少算力回答——low 快但简略，max 慢但详细
 import { getInitialEffortSetting, parseEffortValue } from './utils/effort.js';
 
-// 导入快速模式相关函数
+// 导入快速模式函数，快速模式使用更快的模型（Opus 快速输出），减少等待时间
 import { getInitialFastModeSetting, isFastModeEnabled, prefetchFastModeStatus, resolveFastModeStatusFromCache } from './utils/fastMode.js';
 
-// 导入托管环境变量应用函数
+// 导入托管环境变量应用函数，将远程设置中的环境变量应用到当前进程（如代理地址）
 import { applyConfigEnvironmentVariables } from './utils/managedEnv.js';
 
-// 导入消息创建工具函数
+// 导入消息创建函数，用于构造发送给 AI 的系统消息和用户消息
 import { createSystemMessage, createUserMessage } from './utils/messages.js';
 
-// 导入平台检测函数
+// 导入平台检测函数，判断当前运行在 macOS/Linux/Windows 上，影响路径和命令的处理
 import { getPlatform } from './utils/platform.js';
 
-// 导入渲染选项获取函数
+// 导入渲染选项获取函数，用于配置 Ink 终端渲染器的参数（如是否显示光标）
 import { getBaseRenderOptions } from './utils/renderOptions.js';
 
-// 导入会话入口认证令牌获取函数
+// 导入会话入口认证令牌，用于 CCR 远程会话的身份验证
 import { getSessionIngressAuthToken } from './utils/sessionIngressAuth.js';
 
-// 导入设置变更检测器
+// 导入设置变更检测器，监听 settings.json 文件变化，实现配置的热重载
 import { settingsChangeDetector } from './utils/settings/changeDetector.js';
 
-// 导入技能变更检测器
+// 导入技能变更检测器，监听自定义技能（/skill）文件的变化，自动重新加载
 import { skillChangeDetector } from './utils/skills/skillChangeDetector.js';
 
-// 导入慢操作工具函数（JSON 解析和文件写入）
+// 导入慢操作工具，将大 JSON 解析和文件同步写入标记为慢操作，用于性能监控
 import { jsonParse, writeFileSync_DEPRECATED } from './utils/slowOperations.js';
 
-// 导入初始团队上下文计算函数
+// 导入团队上下文计算，在群集模式重新连接时恢复之前的团队协作状态
 import { computeInitialTeamContext } from './utils/swarm/reconnection.js';
 
-// 导入警告处理器初始化函数
+// 导入警告处理器，捕获 Node.js 的 deprecation 警告，避免它们污染用户界面
 import { initializeWarningHandler } from './utils/warningHandler.js';
 
-// 导入 worktree（工作树）模式启用判断函数
+// 导入 worktree 模式判断，worktree 允许在一个 git 仓库中同时处理多个分支
 import { isWorktreeModeEnabled } from './utils/worktreeModeEnabled.js';
 
 // Lazy require to avoid circular dependency: teammate.ts -> AppState.tsx -> ... -> main.tsx
@@ -261,13 +261,13 @@ import { isWorktreeModeEnabled } from './utils/worktreeModeEnabled.js';
 // 使用延迟 require 避免循环依赖：teammate.ts → AppState.tsx → ... → main.tsx
 /* eslint-disable @typescript-eslint/no-require-imports */
 
-// 延迟加载 teammate 工具模块
+// 延迟加载 teammate 工具模块，避免循环依赖（teammate → AppState → main）
 const getTeammateUtils = () => require('./utils/teammate.js') as typeof import('./utils/teammate.js');
 
-// 延迟加载 teammate 提示词补充模块
+// 延迟加载 teammate 提示词补充模块，在群集模式下给子代理附加协作相关的提示词
 const getTeammatePromptAddendum = () => require('./utils/swarm/teammatePromptAddendum.js') as typeof import('./utils/swarm/teammatePromptAddendum.js');
 
-// 延迟加载 teammate 模式快照模块
+// 延迟加载 teammate 模式快照模块，用于获取当前群集的代理模式状态
 const getTeammateModeSnapshot = () => require('./utils/swarm/backends/teammateModeSnapshot.js') as typeof import('./utils/swarm/backends/teammateModeSnapshot.js');
 /* eslint-enable @typescript-eslint/no-require-imports */
 // Dead code elimination: conditional import for COORDINATOR_MODE
@@ -279,7 +279,7 @@ const getTeammateModeSnapshot = () => require('./utils/swarm/backends/teammateMo
 // 死代码消除：根据特性标志条件导入协调器模式模块
 /* eslint-disable @typescript-eslint/no-require-imports */
 
-// 条件导入：仅当 COORDINATOR_MODE 特性启用时才加载协调器模块
+// 条件导入：仅当 COORDINATOR_MODE 启用时加载协调器模块，协调器管理多个 Agent 的任务分配
 const coordinatorModeModule = feature('COORDINATOR_MODE') ? require('./coordinator/coordinatorMode.js') as typeof import('./coordinator/coordinatorMode.js') : null;
 /* eslint-enable @typescript-eslint/no-require-imports */
 // Dead code elimination: conditional import for KAIROS (assistant mode)
@@ -291,181 +291,181 @@ const coordinatorModeModule = feature('COORDINATOR_MODE') ? require('./coordinat
 // 死代码消除：根据特性标志条件导入 KAIROS（助手模式）模块
 /* eslint-disable @typescript-eslint/no-require-imports */
 
-// 条件导入：仅当 KAIROS 特性启用时才加载助手模块
+// 条件导入：仅当 KAIROS 启用时加载助手模块，KAIROS 是 Claude 的持续运行助手模式
 const assistantModule = feature('KAIROS') ? require('./assistant/index.js') as typeof import('./assistant/index.js') : null;
 
-// 条件导入：KAIROS 的网关模块
+// 条件导入：KAIROS 网关模块，控制用户是否有权限使用助手模式
 const kairosGate = feature('KAIROS') ? require('./assistant/gate.js') as typeof import('./assistant/gate.js') : null;
 
-// 导入 Node.js path 模块的相对路径和绝对路径解析函数
+// 导入路径解析函数，用于将用户提供的相对路径转换为绝对路径（如 --system-prompt-file）
 import { relative, resolve } from 'path';
 
-// 导入分析禁用状态判断函数
+// 导入分析禁用判断，检查用户是否选择退出遥测数据收集
 import { isAnalyticsDisabled } from 'src/services/analytics/config.js';
 
-// 导入 GrowthBook 特性值缓存读取函数（注意：缓存值可能过期）
+// 导入 GrowthBook 特性值缓存读取（可能过期），用于快速读取功能开关状态而不等待网络
 import { getFeatureValue_CACHED_MAY_BE_STALE } from 'src/services/analytics/growthbook.js';
 
-// 导入分析事件日志记录相关类型和函数
+// 导入分析事件记录函数，用于将用户行为和系统事件上报到分析平台（如启动、工具使用）
 import { type AnalyticsMetadata_I_VERIFIED_THIS_IS_NOT_CODE_OR_FILEPATHS, logEvent } from 'src/services/analytics/index.js';
 
-// 导入分析门控初始化函数
+// 导入分析门控初始化，在启动时设置分析数据的发送通道和采样率
 import { initializeAnalyticsGates } from 'src/services/analytics/sink.js';
 
-// 导入引导状态相关的 getter 和 setter 函数
+// 导入全局状态的 getter/setter，包括工作目录、远程模式标志、主循环模型覆盖等核心运行时状态
 import { getOriginalCwd, setAdditionalDirectoriesForClaudeMd, setIsRemoteMode, setMainLoopModelOverride, setMainThreadAgentType, setTeleportedSessionInfo } from './bootstrap/state.js';
 
-// 导入命令过滤和获取函数
+// 导入命令过滤函数，在远程模式下某些命令不可用（如本地文件操作），需要过滤掉
 import { filterCommandsForRemoteMode, getCommands } from './commands.js';
 
-// 导入统计存储类型
+// 导入统计存储类型，用于类型标注——记录本次会话的 token 用量、工具调用次数等统计信息
 import type { StatsStore } from './context/stats.js';
 
-// 导入各种对话框启动函数
+// 导入对话框启动函数，用于弹出设置错误提示、会话恢复选择、远程仓库不匹配等交互界面
 import { launchAssistantInstallWizard, launchAssistantSessionChooser, launchInvalidSettingsDialog, launchResumeChooser, launchSnapshotUpdateDialog, launchTeleportRepoMismatchDialog, launchTeleportResumeWrapper } from './dialogLaunchers.js';
 
-// 导入终端光标显示常量
+// 导入终端光标显示常量，程序退出时需要用此常量恢复终端光标，避免光标消失
 import { SHOW_CURSOR } from './ink/termio/dec.js';
 
-// 导入交互式辅助函数
+// 导入交互式辅助函数：渲染 Ink 界面、显示信任/登录向导、错误退出等
 import { exitWithError, exitWithMessage, getRenderContext, renderAndRun, showSetupScreens } from './interactiveHelpers.js';
 
-// 导入内置插件初始化函数
+// 导入内置插件初始化，在启动时注册 Claude Code 自带的插件（如 code-parser 技能）
 import { initBuiltinPlugins } from './plugins/bundled/index.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
 
 /* eslint-enable @typescript-eslint/no-require-imports */
 
-// 导入配额状态检查函数
+// 导入配额状态检查，用于判断用户是否还有足够的 API 调用额度
 import { checkQuotaStatus } from './services/claudeAiLimits.js';
 
-// 导入 MCP 工具、命令和资源获取函数
+// 导入 MCP 客户端函数，连接 MCP 服务器后获取它们提供的工具、命令和资源列表
 import { getMcpToolsCommandsAndResources, prefetchAllMcpResources } from './services/mcp/client.js';
 
-// 导入插件安装和更新的有效作用域常量
+// 导入插件作用域常量，定义插件可以安装到哪些位置（用户级/项目级/团队级）
 import { VALID_INSTALLABLE_SCOPES, VALID_UPDATE_SCOPES } from './services/plugins/pluginCliCommands.js';
 
-// 导入内置技能初始化函数
+// 导入内置技能初始化，在启动时注册 Claude Code 自带的技能（如 /help、/clear 等）
 import { initBundledSkills } from './skills/bundled/index.js';
 
-// 导入 Agent 颜色名称类型
+// 导入 Agent 颜色名称类型，群集模式下每个 Agent 用不同颜色标识，方便区分输出
 import type { AgentColorName } from './tools/AgentTool/agentColorManager.js';
 
-// 导入 Agent 工具相关函数
+// 导入 Agent 工具函数：从目录加载自定义 Agent 定义、判断是否为内置/自定义 Agent
 import { getActiveAgentsFromList, getAgentDefinitionsWithOverrides, isBuiltInAgent, isCustomAgent, parseAgentsFromJson } from './tools/AgentTool/loadAgentsDir.js';
 
-// 导入日志选项类型
+// 导入日志选项类型，用于类型标注——定义日志导出时的输出格式
 import type { LogOption } from './types/logs.js';
 
-// 导入消息类型
+// 导入消息类型，用于类型标注——定义对话中每条消息的数据结构（用户消息/助手消息/工具结果）
 import type { Message as MessageType } from './types/message.js';
 
-// 导入最低版本断言函数
+// 导入最低版本断言，检查当前 Claude Code 版本是否满足最低要求，过旧则提示更新
 import { assertMinVersion } from './utils/autoUpdater.js';
 
-// 导入 Chrome 中的 Claude 相关提示词常量
+// 导入 Chrome 中 Claude 的提示词，当启用浏览器集成时，给 AI 附加浏览器操作的提示
 import { CLAUDE_IN_CHROME_SKILL_HINT, CLAUDE_IN_CHROME_SKILL_HINT_WITH_WEBBROWSER } from './utils/claudeInChrome/prompt.js';
 
-// 导入 Chrome 中的 Claude 设置相关函数
+// 导入 Chrome 中 Claude 的设置函数，控制是否启用浏览器集成功能（自动/手动）
 import { setupClaudeInChrome, shouldAutoEnableClaudeInChrome, shouldEnableClaudeInChrome } from './utils/claudeInChrome/setup.js';
 
-// 导入模型上下文窗口获取函数
+// 导入上下文窗口获取函数，不同模型能处理的最大 token 数不同，需要据此调整策略
 import { getContextWindowForModel } from './utils/context.js';
 
-// 导入会话恢复加载函数
+// 导入会话恢复加载，用于 --continue/--resume 参数，从磁盘加载之前的对话记录继续聊天
 import { loadConversationForResume } from './utils/conversationRecovery.js';
 
-// 导入深度链接横幅构建函数
+// 导入深度链接横幅构建，当通过 cc:// URL 启动时，显示来源信息横幅
 import { buildDeepLinkBanner } from './utils/deepLink/banner.js';
 
-// 导入环境检测工具函数
+// 导入环境检测函数：isEnvTruthy 检查环境变量是否为真值，isBareMode 检查是否为极简模式
 import { hasNodeOption, isBareMode, isEnvTruthy, isInProtectedNamespace } from './utils/envUtils.js';
 
-// 导入示例命令刷新函数
+// 导入示例命令刷新，在设置变更后更新技能列表，确保 / 命令列表是最新的
 import { refreshExampleCommands } from './utils/exampleCommands.js';
 
-// 导入帧率指标类型
+// 导入帧率指标类型，用于监控 Ink 终端渲染的帧率，诊断界面卡顿问题
 import type { FpsMetrics } from './utils/fpsTracker.js';
 
-// 导入工作树路径获取函数
+// 导入 worktree 路径获取，在 git worktree 模式下获取各工作树的文件路径
 import { getWorktreePaths } from './utils/getWorktreePaths.js';
 
-// 导入 Git 相关工具函数
+// 导入 Git 工具函数：检测是否在 git 仓库中、获取当前分支、统计 worktree 数量
 import { findGitRoot, getBranch, getIsGit, getWorktreeCount } from './utils/git.js';
 
-// 导入 GitHub CLI 认证状态检查函数
+// 导入 GitHub CLI 认证状态检查，判断用户是否已登录 gh 命令行工具（影响 PR 操作功能）
 import { getGhAuthStatus } from './utils/github/ghAuthStatus.js';
 
-// 导入安全的 JSON 解析函数
+// 导入安全 JSON 解析，解析 --settings 参数传入的 JSON 字符串，失败时返回 null 而非崩溃
 import { safeParseJSON } from './utils/json.js';
 
-// 导入错误日志记录函数
+// 导入错误日志记录，将运行时错误写入日志文件，方便排查问题
 import { logError } from './utils/log.js';
 
-// 导入模型弃用警告获取函数
+// 导入模型弃用警告，当用户指定了已过时的模型名称时，提示升级到新模型
 import { getModelDeprecationWarning } from './utils/model/deprecation.js';
 
-// 导入模型相关工具函数
+// 导入模型工具函数：解析用户指定的模型名（如 'sonnet'→'claude-sonnet-4-6'）、获取默认模型
 import { getDefaultMainLoopModel, getUserSpecifiedModelSetting, normalizeModelStringForAPI, parseUserSpecifiedModel } from './utils/model/model.js';
 
-// 导入模型字符串初始化函数
+// 导入模型字符串初始化，确保模型别名映射表已加载（'opus'→实际模型ID 等映射关系）
 import { ensureModelStringsInitialized } from './utils/model/modelStrings.js';
 
-// 导入权限模式常量
+// 导入权限模式列表，定义所有可用的权限模式（default/plan/auto/bypass 等）
 import { PERMISSION_MODES } from './utils/permissions/PermissionMode.js';
 
-// 导入权限设置相关工具函数
+// 导入权限设置函数：从命令行解析权限模式、初始化工具权限上下文、验证 auto 模式资格
 import { checkAndDisableBypassPermissions, getAutoModeEnabledStateIfCached, initializeToolPermissionContext, initialPermissionModeFromCLI, isDefaultPermissionModeAuto, parseToolListFromCLI, removeDangerousPermissions, stripDangerousPermissionsForAutoMode, verifyAutoModeGateAccess } from './utils/permissions/permissionSetup.js';
 
-// 导入孤立插件版本后台清理函数
+// 导入孤立插件清理，后台删除不再被任何技能引用的旧版插件缓存文件
 import { cleanupOrphanedPluginVersionsInBackground } from './utils/plugins/cacheUtils.js';
 
-// 导入版本化插件初始化函数
+// 导入版本化插件初始化，加载已安装的第三方插件并注册它们提供的工具
 import { initializeVersionedPlugins } from './utils/plugins/installedPluginsManager.js';
 
-// 导入托管插件名称获取函数
+// 导入托管插件名称获取，返回由企业管理员统一管理的插件列表名称
 import { getManagedPluginNames } from './utils/plugins/managedPlugins.js';
 
-// 导入插件缓存的 glob 排除规则获取函数
+// 导入插件缓存 glob 排除规则，清理孤立插件时排除正在使用的目录
 import { getGlobExclusionsForPluginCache } from './utils/plugins/orphanedPluginFilter.js';
 
-// 导入插件种子目录获取函数
+// 导入插件种子目录获取，返回内置插件的安装源目录路径
 import { getPluginSeedDirs } from './utils/plugins/pluginDirectories.js';
 
-// 导入 ripgrep 文件计数函数（用于统计项目文件数）
+// 导入 ripgrep 文件计数，快速统计项目中的文件数量（用于估算上下文大小和显示项目概览）
 import { countFilesRoundedRg } from './utils/ripgrep.js';
 
-// 导入会话启动和设置钩子处理函数
+// 导入钩子处理函数：SessionStart 钩子在会话开始时运行，Setup 钩子在初始化阶段运行
 import { processSessionStartHooks, processSetupHooks } from './utils/sessionStart.js';
 
-// 导入会话存储相关函数
+// 导入会话存储函数：保存/加载对话记录、缓存会话标题、按标题搜索历史会话
 import { cacheSessionTitle, getSessionIdFromLog, loadTranscriptFromFile, saveAgentSetting, saveMode, searchSessionsByCustomTitle, sessionIdExists } from './utils/sessionStorage.js';
 
-// 导入 MDM 设置加载等待函数
+// 导入 MDM 设置加载等待，确保企业 MDM 配置已读取完毕后再继续启动流程
 import { ensureMdmSettingsLoaded } from './utils/settings/mdm/settings.js';
 
-// 导入设置相关获取函数
+// 导入设置获取函数：读取初始设置、获取指定来源的设置、获取设置验证错误
 import { getInitialSettings, getManagedSettingsKeysForLogging, getSettingsForSource, getSettingsWithErrors } from './utils/settings/settings.js';
 
-// 导入设置缓存重置函数
+// 导入设置缓存重置，当 --settings 参数改变了设置来源后，需要清空缓存重新读取
 import { resetSettingsCache } from './utils/settings/settingsCache.js';
 
-// 导入验证错误类型
+// 导入验证错误类型，用于类型标注——当设置文件内容不符合规范时产生的错误对象
 import type { ValidationError } from './utils/settings/validation.js';
 
-// 导入任务相关常量
+// 导入任务常量，定义任务列表的默认 ID 和任务状态枚举（pending/in_progress/completed）
 import { DEFAULT_TASKS_MODE_TASK_LIST_ID, TASK_STATUSES } from './utils/tasks.js';
 
-// 导入插件遥测相关函数
+// 导入插件遥测函数，记录哪些插件被启用以及插件加载失败的错误信息
 import { logPluginLoadErrors, logPluginsEnabledForSession } from './utils/telemetry/pluginTelemetry.js';
 
-// 导入技能加载遥测函数
+// 导入技能加载遥测，记录本次会话加载了哪些自定义技能（/skill-name）
 import { logSkillsLoaded } from './utils/telemetry/skillLoadedEvent.js';
 
-// 导入临时文件路径生成函数
+// 导入临时文件路径生成，用于 --settings 参数传入 JSON 字符串时创建临时设置文件
 import { generateTempFilePath } from './utils/tempfile.js';
 
-// 导入 UUID 验证函数
+// 导入 UUID 验证，用于检查 --session-id 参数是否提供了合法的 UUID 格式
 import { validateUuid } from './utils/uuid.js';
 // Plugin startup checks are now handled non-blockingly in REPL.tsx
 
@@ -473,95 +473,95 @@ import { validateUuid } from './utils/uuid.js';
 // 原有注释：Plugin startup checks are now handled non-blockingly in REPL.tsx
 // 插件启动检查现在在 REPL.tsx 中非阻塞地处理
 
-// 导入 MCP 添加命令注册函数
+// 导入 MCP 添加命令注册，注册 `claude mcp add` 子命令，让用户可以添加 MCP 服务器
 import { registerMcpAddCommand } from 'src/commands/mcp/addCommand.js';
 
-// 导入 MCP XAA IDP 命令注册函数
+// 导入 MCP XAA IDP 命令注册，注册企业级身份认证相关的 MCP 子命令
 import { registerMcpXaaIdpCommand } from 'src/commands/mcp/xaaIdpCommand.js';
 
-// 导入权限上下文日志记录函数（用于内部日志）
+// 导入权限上下文日志，将当前权限配置记录到内部日志系统，供排障使用
 import { logPermissionContextForAnts } from 'src/services/internalLogging.js';
 
-// 导入 Claude AI MCP 配置获取函数
+// 导入 Claude AI MCP 配置获取，从 claude.ai 网站同步用户配置的 MCP 服务器
 import { fetchClaudeAIMcpConfigsIfEligible } from 'src/services/mcp/claudeai.js';
 
-// 导入 MCP 服务器缓存清除函数
+// 导入 MCP 服务器缓存清除，当配置变更后需要清空缓存的 MCP 连接重新建立
 import { clearServerCache } from 'src/services/mcp/client.js';
 
-// 导入 MCP 配置解析和过滤相关函数
+// 导入 MCP 配置函数：解析 JSON 配置、按企业策略过滤、去重、检查签名
 import { areMcpConfigsAllowedWithEnterpriseMcpConfig, dedupClaudeAiMcpServers, doesEnterpriseMcpConfigExist, filterMcpServersByPolicy, getClaudeCodeMcpConfigs, getMcpServerSignature, parseMcpConfig, parseMcpConfigFromFilePath } from 'src/services/mcp/config.js';
 
-// 导入 MCP 服务器命令和资源过滤函数
+// 导入 MCP 过滤函数，根据企业策略过滤某些 MCP 服务器提供的命令和资源
 import { excludeCommandsByServer, excludeResourcesByServer } from 'src/services/mcp/utils.js';
 
-// 导入 XAA（扩展认证架构）启用判断函数
+// 导入 XAA 启用判断，XAA 是企业级身份认证代理，用于统一管理 MCP 服务器的认证
 import { isXaaEnabled } from 'src/services/mcp/xaaIdpLogin.js';
 
-// 导入提示词获取函数
+// 导入使用提示获取，在会话开始时给用户展示有用的操作提示和小技巧
 import { getRelevantTips } from 'src/services/tips/tipRegistry.js';
 
-// 导入上下文指标日志函数
+// 导入上下文指标日志，记录当前会话的上下文窗口使用情况（用了多少 token）
 import { logContextMetrics } from 'src/utils/api.js';
 
-// 导入 Chrome 中的 Claude MCP 服务器相关常量和判断函数
+// 导入 Chrome MCP 服务器相关常量，用于识别浏览器集成产生的 MCP 服务器并避免重复注册
 import { CLAUDE_IN_CHROME_MCP_SERVER_NAME, isClaudeInChromeMCPServer } from 'src/utils/claudeInChrome/common.js';
 
-// 导入清理注册函数
+// 导入清理注册函数，注册程序退出时需要执行的清理任务（如关闭连接、删除临时文件）
 import { registerCleanup } from 'src/utils/cleanupRegistry.js';
 
-// 导入 CLI 参数急切解析函数
+// 导入 CLI 参数急切解析，在 Commander.js 解析之前提前提取 --settings 等关键参数
 import { eagerParseCliFlag } from 'src/utils/cliArgs.js';
 
-// 导入空归因状态创建函数
+// 导入空归因状态创建，初始化代码修改的归属追踪（标记哪些修改是 AI 做的）
 import { createEmptyAttributionState } from 'src/utils/commitAttribution.js';
 
-// 导入并发会话管理函数
+// 导入并发会话管理，统计当前同时运行的 Claude Code 会话数量，防止资源过载
 import { countConcurrentSessions, registerSession, updateSessionName } from 'src/utils/concurrentSessions.js';
 
-// 导入当前工作目录获取函数
+// 导入当前工作目录获取，获取用户启动 claude 命令时所在的目录路径
 import { getCwd } from 'src/utils/cwd.js';
 
-// 导入调试相关函数
+// 导入调试函数：logForDebugging 输出调试日志，setHasFormattedOutput 标记格式化输出模式
 import { logForDebugging, setHasFormattedOutput } from 'src/utils/debug.js';
 
-// 导入错误处理工具函数和类型
+// 导入错误处理函数：提取错误消息、判断文件不存在错误、Teleport 操作专用错误类型
 import { errorMessage, getErrnoCode, isENOENT, TeleportOperationError, toError } from 'src/utils/errors.js';
 
-// 导入文件系统操作相关函数
+// 导入文件系统操作函数：获取安全的文件系统实现、解析文件路径防止路径穿越攻击
 import { getFsImplementation, safeResolvePath } from 'src/utils/fsOperations.js';
 
-// 导入优雅关闭函数（异步和同步版本）
+// 导入优雅关闭函数，确保程序退出时完成所有清理工作（刷新日志、关闭连接）
 import { gracefulShutdown, gracefulShutdownSync } from 'src/utils/gracefulShutdown.js';
 
-// 导入钩子事件启用设置函数
+// 导入钩子事件启用，控制哪些 Hook 事件可以被触发（PreToolUse、PostToolUse 等）
 import { setAllHookEventsEnabled } from 'src/utils/hooks/hookEvents.js';
 
-// 导入模型能力刷新函数
+// 导入模型能力刷新，从服务端获取模型支持的最新功能列表（如是否支持图片输入）
 import { refreshModelCapabilities } from 'src/utils/model/modelCapabilities.js';
 
-// 导入进程相关工具函数
+// 导入进程工具函数：peekForStdinData 检查管道是否有数据输入，writeToStderr 写入错误输出
 import { peekForStdinData, writeToStderr } from 'src/utils/process.js';
 
-// 导入工作目录设置函数
+// 导入工作目录设置，在 Shell 工具中更新当前工作目录（cd 命令后需要同步）
 import { setCwd } from 'src/utils/Shell.js';
 
-// 导入会话恢复处理类型
+// 导入会话恢复处理，将保存的对话记录转换回可用的消息格式，支持 --resume 恢复对话
 import { type ProcessedResume, processResumedConversation } from 'src/utils/sessionRestore.js';
 
-// 导入设置来源标志解析函数
+// 导入设置来源解析，解析 --setting-sources 参数，控制从哪些来源加载设置
 import { parseSettingSourcesFlag } from 'src/utils/settings/constants.js';
 
-// 导入复数形式工具函数
+// 导入复数形式函数，英文提示信息中需要正确使用单复数（如 '1 rule' vs '2 rules'）
 import { plural } from 'src/utils/stringUtils.js';
 
-// 导入引导状态相关的众多 getter/setter 函数
+// 导入全局状态 getter/setter，管理会话级状态：客户端类型、权限模式、模型、交互模式等
 import { type ChannelEntry, getInitialMainLoopModel, getIsNonInteractiveSession, getSdkBetas, getSessionId, getUserMsgOptIn, setAllowedChannels, setAllowedSettingSources, setChromeFlagOverride, setClientType, setCwdState, setDirectConnectServerUrl, setFlagSettingsPath, setInitialMainLoopModel, setInlinePlugins, setIsInteractive, setKairosActive, setOriginalCwd, setQuestionPreviewFormat, setSdkBetas, setSessionBypassPermissionsMode, setSessionPersistenceDisabled, setSessionSource, setUserMsgOptIn, switchSession } from './bootstrap/state.js';
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 
-// 条件导入：自动模式状态模块（仅在 TRANSCRIPT_CLASSIFIER 特性启用时加载）
+// 条件导入：自动模式状态模块，管理 auto 模式的用户选择状态（是否已接受自动权限）
 const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER') ? require('./utils/permissions/autoModeState.js') as typeof import('./utils/permissions/autoModeState.js') : null;
 
 // TeleportRepoMismatchDialog, TeleportResumeWrapper dynamically imported at call sites
@@ -569,40 +569,40 @@ const autoModeStateModule = feature('TRANSCRIPT_CLASSIFIER') ? require('./utils/
 // 原有注释：TeleportRepoMismatchDialog, TeleportResumeWrapper dynamically imported at call sites
 // Teleport 仓库不匹配对话框和恢复包装器在调用点动态导入
 
-// 导入自动更新迁移函数
+// 导入自动更新迁移，将旧版的 autoUpdater 配置迁移到新的 settings.json 格式
 import { migrateAutoUpdatesToSettings } from './migrations/migrateAutoUpdatesToSettings.js';
 
-// 导入绕过权限迁移函数
+// 导入绕过权限迁移，将旧版 --dangerously-skip-permissions 的接受记录迁移到配置文件
 import { migrateBypassPermissionsAcceptedToSettings } from './migrations/migrateBypassPermissionsAcceptedToSettings.js';
 
-// 导入启用所有项目 MCP 服务器迁移函数
+// 导入项目 MCP 迁移，将旧版自动启用项目级 MCP 服务器的设置迁移到新格式
 import { migrateEnableAllProjectMcpServersToSettings } from './migrations/migrateEnableAllProjectMcpServersToSettings.js';
 
-// 导入 Fennec 到 Opus 模型迁移函数
+// 导入 Fennec→Opus 迁移，将旧代号 'fennec' 的模型名更新为 'opus'
 import { migrateFennecToOpus } from './migrations/migrateFennecToOpus.js';
 
-// 导入旧版 Opus 到当前版本迁移函数
+// 导入旧版 Opus 迁移，将早期 Opus 模型名更新为当前版本
 import { migrateLegacyOpusToCurrent } from './migrations/migrateLegacyOpusToCurrent.js';
 
-// 导入 Opus 到 Opus1m 模型迁移函数
+// 导入 Opus→Opus1m 迁移，将默认模型从 Opus 更新为 Opus 1m 版本
 import { migrateOpusToOpus1m } from './migrations/migrateOpusToOpus1m.js';
 
-// 导入 REPL 桥接启用到远程控制启动迁移函数
+// 导入 REPL 桥接迁移，将旧版 replBridgeEnabled 设置迁移为 remoteControlAtStartup
 import { migrateReplBridgeEnabledToRemoteControlAtStartup } from './migrations/migrateReplBridgeEnabledToRemoteControlAtStartup.js';
 
-// 导入 Sonnet1m 到 Sonnet45 模型迁移函数
+// 导入 Sonnet1m→Sonnet45 迁移，将旧版模型名更新为新版本
 import { migrateSonnet1mToSonnet45 } from './migrations/migrateSonnet1mToSonnet45.js';
 
-// 导入 Sonnet45 到 Sonnet46 模型迁移函数
+// 导入 Sonnet45→Sonnet46 迁移，将默认模型从 Sonnet 4.5 更新为 4.6
 import { migrateSonnet45ToSonnet46 } from './migrations/migrateSonnet45ToSonnet46.js';
 
-// 导入自动模式选择重置函数
+// 导入自动模式选择重置，在产品策略变更时重置用户的 auto 模式选择
 import { resetAutoModeOptInForDefaultOffer } from './migrations/resetAutoModeOptInForDefaultOffer.js';
 
-// 导入 Pro 到 Opus 默认值重置函数
+// 导入 Pro→Opus 默认值重置，将 Pro 用户的默认模型从 Sonnet 改为 Opus
 import { resetProToOpusDefault } from './migrations/resetProToOpusDefault.js';
 
-// 导入远程会话配置创建函数
+// 导入远程会话配置创建，在 CCR 远程模式下创建与服务端的连接配置
 import { createRemoteSessionConfig } from './remote/RemoteSessionManager.js';
 /* eslint-enable @typescript-eslint/no-require-imports */
 // teleportWithProgress dynamically imported at call site
@@ -612,61 +612,61 @@ import { createRemoteSessionConfig } from './remote/RemoteSessionManager.js';
 // 原有注释：teleportWithProgress dynamically imported at call site
 // teleportWithProgress 在调用点动态导入
 
-// 导入直连会话创建函数和错误类型
+// 导入直连会话创建，处理 cc:// URL 直接连接到远程 Claude Code 实例
 import { createDirectConnectSession, DirectConnectError } from './server/createDirectConnectSession.js';
 
-// 导入 LSP 服务器管理器初始化函数
+// 导入 LSP 服务器管理器初始化，LSP 提供 IDE 集成功能（代码补全、跳转定义等）
 import { initializeLspServerManager } from './services/lsp/manager.js';
 
-// 导入提示建议启用判断函数
+// 导入提示建议判断，决定是否在输入框中显示 AI 生成的提示建议
 import { shouldEnablePromptSuggestion } from './services/PromptSuggestion/promptSuggestion.js';
 
-// 导入应用状态相关类型和默认值
+// 导入应用状态，AppState 是整个交互式界面的核心状态对象，包含所有 UI 和会话数据
 import { type AppState, getDefaultAppState, IDLE_SPECULATION_STATE } from './state/AppStateStore.js';
 
-// 导入应用状态变更监听函数
+// 导入状态变更监听，当 AppState 变化时触发副作用（如保存设置、更新界面）
 import { onChangeAppState } from './state/onChangeAppState.js';
 
-// 导入状态存储创建函数
+// 导入状态存储创建，创建 Zustand 状态管理 store，管理应用的响应式状态
 import { createStore } from './state/store.js';
 
-// 导入会话 ID 类型断言函数
+// 导入会话 ID 类型断言，将字符串安全地转换为 SessionId 类型
 import { asSessionId } from './types/ids.js';
 
-// 导入 SDK Beta 功能过滤函数
+// 导入 SDK Beta 过滤，根据用户订阅类型过滤可用的 Beta 功能
 import { filterAllowedSdkBetas } from './utils/betas.js';
 
-// 导入打包模式检测函数
+// 导入打包模式检测，判断是否以单文件可执行文件方式运行（而非 npm 全局安装）
 import { isInBundledMode, isRunningWithBun } from './utils/bundledMode.js';
 
-// 导入诊断日志函数（不含个人身份信息）
+// 导入无隐私诊断日志，记录启动阶段信息用于排查问题，但绝不包含用户个人信息
 import { logForDiagnosticsNoPII } from './utils/diagLogs.js';
 
-// 导入 GitHub 仓库路径映射相关函数
+// 导入 GitHub 仓库路径映射，将本地文件路径映射到 GitHub 上的对应路径（用于 PR 链接）
 import { filterExistingPaths, getKnownPathsForRepo } from './utils/githubRepoPathMapping.js';
 
-// 导入插件缓存清除和加载函数
+// 导入插件缓存操作，清除过期缓存或仅从缓存加载插件信息（不实际连接）
 import { clearPluginCache, loadAllPluginsCacheOnly } from './utils/plugins/pluginLoader.js';
 
-// 导入变更日志迁移函数
+// 导入变更日志迁移，将旧版存储在配置中的更新日志信息迁移到独立文件
 import { migrateChangelogFromConfig } from './utils/releaseNotes.js';
 
-// 导入沙箱管理器（用于安全地执行命令）
+// 导入沙箱管理器，在受限环境中执行 Bash 命令，防止恶意代码访问敏感文件
 import { SandboxManager } from './utils/sandbox/sandbox-adapter.js';
 
-// 导入 Teleport API 相关函数
+// 导入 Teleport API，Teleport 功能允许将会话从本地传送到远程服务器继续执行
 import { fetchSession, prepareApiRequest } from './utils/teleport/api.js';
 
-// 导入 Teleport 相关工具函数
+// 导入 Teleport 工具函数：验证 git 状态、检出分支、处理传送恢复的消息格式
 import { checkOutTeleportedSessionBranch, processMessagesForTeleportResume, teleportToRemoteWithErrorHandling, validateGitState, validateSessionRepository } from './utils/teleport.js';
 
-// 导入思考模式配置相关函数
+// 导入思考模式配置，控制 AI 是否使用 extended thinking（深度思考）以及 token 预算
 import { shouldEnableThinkingByDefault, type ThinkingConfig } from './utils/thinking.js';
 
-// 导入用户初始化和缓存重置函数
+// 导入用户初始化，获取当前登录用户信息（订阅类型、组织等），为后续鉴权做准备
 import { initUser, resetUserCache } from './utils/user.js';
 
-// 导入 worktree 相关工具函数
+// 导入 worktree 工具函数：检测 tmux 是否可用、解析 PR 引用（如 #123 转为分支名）
 import { getTmuxInstallInstructions, isTmuxAvailable, parsePRReference } from './utils/worktree.js';
 
 // eslint-disable-next-line custom-rules/no-top-level-side-effects
